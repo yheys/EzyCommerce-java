@@ -3,7 +3,7 @@ package ezycommerce.models;
 public class ElectronicsProduct extends Product {
 
     private String brand;
-    private int warrantyMonths;   // e.g. 12, 24
+    private int warrantyMonths;   
     private String modelNumber;
 
     
