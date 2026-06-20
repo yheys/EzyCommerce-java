@@ -18,20 +18,20 @@ public abstract class Product {
         this.stockQuantity = stockQuantity;
     }
 
-    // ── Getters ───────────────────────────────────────
+    ─
     public int getProductId()       { return productId; }
     public String getName()         { return name; }
     public String getDescription()  { return description; }
     public double getPrice()        { return price; }
     public int getStockQuantity()   { return stockQuantity; }
 
-    // ── Setters ───────────────────────────────────────
+    
     public void setName(String name)               { this.name = name; }
     public void setDescription(String description) { this.description = description; }
     public void setPrice(double price)             { this.price = price; }
     public void setStockQuantity(int qty)          { this.stockQuantity = qty; }
 
-    // ── Methods ───────────────────────────────────────
+    
     public boolean isInStock() {
         return stockQuantity > 0;
     }
@@ -47,10 +47,10 @@ public abstract class Product {
         }
     }
 
-    // ── Abstract Method ───────────────────────────────
+    
     public abstract String getProductDetails();
 
-    // ── toString ──────────────────────────────────────
+    
     @Override
     public String toString() {
         return String.format("[%d] %s — $%.2f (%d in stock)", productId, name, price, stockQuantity);
