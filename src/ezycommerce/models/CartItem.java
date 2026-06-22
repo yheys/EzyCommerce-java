@@ -41,13 +41,20 @@ public class CartItem {
         System.out.println("Quantity : " + quantity);
         System.out.println("Subtotal : $" + getSubtotal());
     } catch (NullPointerException e) {
-        System.out.println("❌ Error: Product not found!");
+        System.out.println("Subtotal : $" + String.format("%.2f", getSubtotal()));
     }
 }
 
     
     @Override
-    public String toString() {
-        return "CartItem[" + product.getName() + " x" + quantity + " = $" + getSubtotal() + "]";
+public String toString() {
+    try {
+        return "CartItem[" + product.getName()
+                + " x" + quantity
+                + " = $" + String.format("%.2f", getSubtotal())
+                + "]";
+    } catch (NullPointerException e) {
+        return "CartItem[No Product x" + quantity + " = $0.00]";
     }
+}
 }
