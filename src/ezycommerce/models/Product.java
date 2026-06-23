@@ -18,7 +18,6 @@ public abstract class Product {
         this.stockQuantity = stockQuantity;
     }
 
-    ─
     public int getProductId()       { return productId; }
     public String getName()         { return name; }
     public String getDescription()  { return description; }
