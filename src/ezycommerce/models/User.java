@@ -39,10 +39,16 @@ public class User {
 
     
     public void displayInfo() {
-        System.out.println("ID    : " + id);
-        System.out.println("Name  : " + name);
-        System.out.println("Email : " + email);
-    }
+    System.out.println("ID    : " + id);
+    System.out.println("Name  : " + name);
+    System.out.println("Email : " + email);
+}
+
+public void displayInfo(boolean showId) {
+    if (showId) System.out.println("ID    : " + id);
+    System.out.println("Name  : " + name);
+    System.out.println("Email : " + email);
+}
 
     
     @Override
