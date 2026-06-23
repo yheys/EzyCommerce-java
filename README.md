@@ -33,7 +33,7 @@ EzyCommerce/
 
 ---
 
-## ⚙️ Setup Instructions
+##  Setup Instructions
 
 ### 1️⃣ Clone the repo:
 ```bash
@@ -90,7 +90,7 @@ App Starts
 
 ---
 
-## 📄 Files Created at Runtime
+##  Files Created at Runtime
 
 | File                   | Description             |
 |------------------------|-------------------------|
