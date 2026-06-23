@@ -342,43 +342,64 @@ public class Main {
 
     
     static void adminMenu() {
-        System.out.print("\nEnter admin password: ");
-        String password = scanner.nextLine();
+    System.out.print("\nEnter admin password: ");
+    String password = scanner.nextLine();
 
-        if (!password.equals("admin123")) {
-            System.out.println("❌ Wrong password! Access denied.");
-            return;
-        }
+    if (!password.equals("admin123")) {
+        System.out.println("❌ Wrong password! Access denied.");
+        return;
+    }
 
-        Admin admin = new Admin(1, "Admin", "admin@ezy.com", "admin123", "ADM01");
-        System.out.println("✅ Welcome, " + admin.getName() + "!");
-        admin.displayInfo();
+    Admin admin = new Admin(1, "Admin", "admin@ezy.com", "admin123", "ADM01");
+    System.out.println("✅ Welcome, " + admin.getName() + "!");
+    admin.displayInfo();
 
-        boolean loggedIn = true;
-        while (loggedIn) {
-            System.out.println("\n--- Admin Menu ---");
-            System.out.println("1. View All Products");
-            System.out.println("2. View All Orders");
-            System.out.println("0. Logout");
-            System.out.print("Enter choice: ");
+    boolean loggedIn = true;
+    while (loggedIn) {
+        System.out.println("\n--- Admin Menu ---");
+        System.out.println("1. View All Products");
+        System.out.println("2. View All Orders");
+        System.out.println("3. Update Order Status");
+        System.out.println("4. Delete Order");
+        System.out.println("5. Statistics");
+        System.out.println("0. Logout");
+        System.out.print("Enter choice: ");
 
-            try {
-                int choice = Integer.parseInt(scanner.nextLine());
-                switch (choice) {
-                    case 1 -> DBConnection.showAllProducts();
-                    case 2 -> {
-                        loadOrdersFromFile();        
-                        admin.viewAllOrders(orders); 
-                    }
-                    case 0 -> {
-                        System.out.println("👋 Logged out!");
-                        loggedIn = false;
-                    }
-                    default -> System.out.println("❌ Invalid choice!");
+        try {
+            int choice = Integer.parseInt(scanner.nextLine());
+            switch (choice) {
+                case 1 -> DBConnection.showAllProducts();
+                case 2 -> {
+                    ReceiptWriter rw = new ReceiptWriter();
+                    rw.readAllOrders();
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("❌ Please enter a valid number!");
+                case 3 -> {
+                    ReceiptWriter rw = new ReceiptWriter();
+                    System.out.print("Enter Order ID to update: ");
+                    int id = Integer.parseInt(scanner.nextLine());
+                    System.out.print("Enter new status (Pending/Shipped/Delivered): ");
+                    String status = scanner.nextLine();
+                    rw.updateOrderStatus(id, status);
+                }
+                case 4 -> {
+                    ReceiptWriter rw = new ReceiptWriter();
+                    System.out.print("Enter Order ID to delete: ");
+                    int id = Integer.parseInt(scanner.nextLine());
+                    rw.deleteOrder(id);
+                }
+                case 5 -> {
+                    ReceiptWriter rw = new ReceiptWriter();
+                    rw.showStatistics();
+                }
+                case 0 -> {
+                    System.out.println("👋 Logged out!");
+                    loggedIn = false;
+                }
+                default -> System.out.println("❌ Invalid choice!");
             }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Please enter a valid number!");
         }
     }
+}
 }
