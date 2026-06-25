@@ -4,14 +4,14 @@ import ezycommerce.db.DBConnection;
 import ezycommerce.exceptions.*;
 import ezycommerce.fileio.ReceiptWriter;
 import ezycommerce.models.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
 
 public class Main {
 
@@ -76,21 +76,26 @@ public class Main {
     }
 
     static void loadCustomersFromFile() {
-        try (Scanner fileScanner = new Scanner(new File("customers.txt"))) {
-            while (fileScanner.hasNextLine()) {
-                String line = fileScanner.nextLine();
-                String[] parts = line.split(",");
-                if (parts.length == 3) {
-                    Customer c = new Customer(customerIdCounter++,
-                                              parts[0], parts[1], parts[2]);
-                    customers.add(c);
-                }
+    try (Scanner fileScanner = new Scanner(new File("customers.txt"))) {
+        while (fileScanner.hasNextLine()) {
+            String line = fileScanner.nextLine().trim();
+            if (line.isEmpty()) continue;
+            String[] parts = line.split(",");
+            if (parts.length == 3) {
+                Customer c = new Customer(customerIdCounter++,
+                                          parts[0].trim(),
+                                          parts[1].trim(),
+                                          parts[2].trim());
+                customers.add(c);
+                System.out.println("DEBUG → Name:[" + parts[0].trim() +
+                                   "] Pass:[" + parts[2].trim() + "]");
             }
-            System.out.println("✅ Customers loaded!");
-        } catch (FileNotFoundException e) {
-            System.out.println("ℹ️ No existing customers found.");
         }
+        System.out.println("✅ Customers loaded!");
+    } catch (FileNotFoundException e) {
+        System.out.println("ℹ️ No existing customers found.");
     }
+}
 
     static void saveCartToFile(Customer customer) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(customer.getName() + "_cart.txt", false))) {
@@ -103,28 +108,6 @@ public class Main {
         }
     }
 
-    static void loadCartFromFile(Customer customer) {
-        try (Scanner fileScanner = new Scanner(new File(customer.getName() + "_cart.txt"))) {
-            customer.getCart().clear();
-            while (fileScanner.hasNextLine()) {
-                String line = fileScanner.nextLine();
-                String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    int productId = Integer.parseInt(parts[0]);
-                    int quantity  = Integer.parseInt(parts[1]);
-                    for (Product p : products) {
-                        if (p.getProductId() == productId) {
-                            customer.addToCart(new CartItem(p, quantity));
-                            break;
-                        }
-                    }
-                }
-            }
-            System.out.println("✅ Cart loaded!");
-        } catch (FileNotFoundException e) {
-            System.out.println("ℹ️ No saved cart found.");
-        }
-    }
 
     static void saveOrderToFile(Order order) {
         try (PrintWriter writer = new PrintWriter(new FileWriter("orders.txt", true))) {
@@ -138,7 +121,29 @@ public class Main {
             System.out.println("❌ Error saving order: " + e.getMessage());
         }
     }
-
+    static void loadCartFromFile(Customer customer) {
+    try (Scanner fileScanner = new Scanner(new File(customer.getName() + "_cart.txt"))) {
+        customer.getCart().clear();
+        while (fileScanner.hasNextLine()) {
+            String line = fileScanner.nextLine().trim();
+            if (line.isEmpty()) continue;
+            String[] parts = line.split(",");
+            if (parts.length == 2) {
+                int productId = Integer.parseInt(parts[0].trim());
+                int quantity  = Integer.parseInt(parts[1].trim());
+                for (Product p : products) {
+                    if (p.getProductId() == productId) {
+                        customer.addToCart(new CartItem(p, quantity));
+                        break;
+                    }
+                }
+            }
+        }
+        System.out.println("✅ Cart loaded!");
+    } catch (FileNotFoundException e) {
+        System.out.println("ℹ️ No saved cart found.");
+    }
+}
     static void loadOrdersFromFile() {
         try (Scanner fileScanner = new Scanner(new File("orders.txt"))) {
             System.out.println("\n--- All Orders ---");
