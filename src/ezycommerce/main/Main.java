@@ -311,34 +311,52 @@ public class Main {
 
     
     static void placeOrder(Customer customer) {
-        try {
-            if (customer.getCart().isEmpty()) {
-                throw new InvalidQuantityException(0);
-            }
-
-            String date = java.time.LocalDate.now().toString();
-            Order order = new Order(orderIdCounter++, customer,
-                                    customer.getCart(), date);
-
-            orders.add(order);
-            customer.addOrder(order);
-            order.displayInfo();
-            saveOrderToFile(order);      
-
-            
-            ReceiptWriter writer = new ReceiptWriter();
-            writer.writeTextReceipt(order);
-            writer.writeBinaryReceipt(order);
-            writer.serializeOrder(order);
-
-            customer.getCart().clear();
-            saveCartToFile(customer);    
-            System.out.println("✅ Order placed successfully!");
-
-        } catch (InvalidQuantityException e) {
-            System.out.println("❌ Your cart is empty! Add items first.");
+    try {
+        if (customer.getCart().isEmpty()) {
+            throw new InvalidQuantityException(0);
         }
+
+        
+        for (CartItem item : customer.getCart()) {
+            if (item.getQuantity() > item.getProduct().getStockQuantity()) {
+                throw new OutOfStockException(
+                    item.getProduct().getName() +
+                    " (Requested: " + item.getQuantity() +
+                    " | Available: " + item.getProduct().getStockQuantity() + ")"
+                );
+            }
+        }
+
+        String date = java.time.LocalDate.now().toString();
+        Order order = new Order(orderIdCounter++, customer,
+                                customer.getCart(), date);
+
+        orders.add(order);
+        customer.addOrder(order);
+        order.displayInfo();
+        saveOrderToFile(order);
+
+        
+        for (CartItem item : order.getItems()) {
+            item.getProduct().reduceStock(item.getQuantity());
+        }
+
+        ReceiptWriter writer = new ReceiptWriter();
+        writer.writeTextReceipt(order);
+        writer.writeBinaryReceipt(order);
+        writer.serializeOrder(order);
+
+        customer.getCart().clear();
+        saveCartToFile(customer);
+        System.out.println("✅ Order placed successfully!");
+
+    } catch (OutOfStockException e) {
+        System.out.println("❌ " + e.getMessage());
+        System.out.println("❌ Order cancelled! Please update your cart.");
+    } catch (InvalidQuantityException e) {
+        System.out.println("❌ Your cart is empty! Add items first.");
     }
+}
 
     
     static void adminMenu() {
