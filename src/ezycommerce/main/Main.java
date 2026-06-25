@@ -24,19 +24,16 @@ public class Main {
 
     public static void main(String[] args) {
 
-        
         loadCustomersFromFile();
 
-        
         DBConnection.testConnection();
         DBConnection.showAllProducts();
 
-        
         products.add(new ElectronicsProduct(1, "iPhone 15", "Latest iPhone", 999.99, 10, "Apple", 12, "IP15"));
         products.add(new ClothingProduct(2, "Nike T-Shirt", "Casual wear", 29.99, 50, "M", "White", "Cotton"));
         products.add(new ElectronicsProduct(3, "Samsung TV", "4K Smart TV", 499.99, 5, "Samsung", 24, "TV4K"));
+        loadProductsStock();
 
-        
         boolean running = true;
         while (running) {
             System.out.println("\n=====================================");
@@ -78,7 +75,6 @@ public class Main {
         }
     }
 
-    
     static void loadCustomersFromFile() {
         try (Scanner fileScanner = new Scanner(new File("customers.txt"))) {
             while (fileScanner.hasNextLine()) {
@@ -96,7 +92,6 @@ public class Main {
         }
     }
 
-    
     static void saveCartToFile(Customer customer) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(customer.getName() + "_cart.txt", false))) {
             for (CartItem item : customer.getCart()) {
@@ -108,15 +103,15 @@ public class Main {
         }
     }
 
-        static void loadCartFromFile(Customer customer) {
+    static void loadCartFromFile(Customer customer) {
         try (Scanner fileScanner = new Scanner(new File(customer.getName() + "_cart.txt"))) {
+            customer.getCart().clear();
             while (fileScanner.hasNextLine()) {
                 String line = fileScanner.nextLine();
                 String[] parts = line.split(",");
                 if (parts.length == 2) {
                     int productId = Integer.parseInt(parts[0]);
                     int quantity  = Integer.parseInt(parts[1]);
-
                     for (Product p : products) {
                         if (p.getProductId() == productId) {
                             customer.addToCart(new CartItem(p, quantity));
@@ -131,7 +126,6 @@ public class Main {
         }
     }
 
-    
     static void saveOrderToFile(Order order) {
         try (PrintWriter writer = new PrintWriter(new FileWriter("orders.txt", true))) {
             writer.println(order.getOrderId() + "," +
@@ -145,7 +139,6 @@ public class Main {
         }
     }
 
-    
     static void loadOrdersFromFile() {
         try (Scanner fileScanner = new Scanner(new File("orders.txt"))) {
             System.out.println("\n--- All Orders ---");
@@ -155,7 +148,7 @@ public class Main {
                 if (parts.length == 5) {
                     System.out.println("📦 Order ID : " + parts[0] +
                                        " | Customer : " + parts[1] +
-                                       " | Total : $" + parts[2] +
+                                       " | Total : $" + String.format("%.2f", Double.parseDouble(parts[2])) +
                                        " | Date : " + parts[3] +
                                        " | Status : " + parts[4]);
                 }
@@ -165,7 +158,38 @@ public class Main {
         }
     }
 
-        static void customerMenu() {
+    static void saveProductsStock() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("stock.txt", false))) {
+            for (Product p : products) {
+                writer.println(p.getProductId() + "," + p.getStockQuantity());
+            }
+        } catch (IOException e) {
+            System.out.println("❌ Error saving stock: " + e.getMessage());
+        }
+    }
+
+    static void loadProductsStock() {
+        try (Scanner fileScanner = new Scanner(new File("stock.txt"))) {
+            while (fileScanner.hasNextLine()) {
+                String line = fileScanner.nextLine();
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    int id    = Integer.parseInt(parts[0]);
+                    int stock = Integer.parseInt(parts[1]);
+                    for (Product p : products) {
+                        if (p.getProductId() == id) {
+                            p.setStockQuantity(stock);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            System.out.println("ℹ️ No stock file found - using default stock.");
+        }
+    }
+
+    static void customerMenu() {
         boolean back = false;
         while (!back) {
             System.out.println("\n--- Customer Login ---");
@@ -196,7 +220,7 @@ public class Main {
                             System.out.println("❌ Wrong name or password!");
                         } else {
                             System.out.println("✅ Welcome back, " + found.getName() + "!");
-                            loadCartFromFile(found);     
+                            loadCartFromFile(found);
                             customerShopMenu(found);
                         }
                     }
@@ -222,7 +246,7 @@ public class Main {
                             Customer newCustomer = new Customer(
                                 customerIdCounter++, name, email, password);
                             customers.add(newCustomer);
-                            saveCustomerToFile(newCustomer);  
+                            saveCustomerToFile(newCustomer);
                             System.out.println("✅ Account created! Welcome, " + name + "!");
                             customerShopMenu(newCustomer);
                         }
@@ -236,7 +260,6 @@ public class Main {
         }
     }
 
-    
     static void customerShopMenu(Customer customer) {
         boolean loggedIn = true;
         while (loggedIn) {
@@ -265,167 +288,162 @@ public class Main {
         }
     }
 
-    
     static void browseProducts(Customer customer) {
-    System.out.println("\n--- Available Products ---");
-    for (Product p : products) {
-        System.out.println(p);
-    }
-
-    System.out.print("\nEnter product ID to add to cart (0 to go back): ");
-    try {
-        int id = Integer.parseInt(scanner.nextLine());
-        if (id == 0) return;
-
-        Product selected = null;
+        System.out.println("\n--- Available Products ---");
         for (Product p : products) {
-            if (p.getProductId() == id) {
-                selected = p;
-                break;
-            }
+            System.out.println(p);
         }
 
-        if (selected == null) {
-            throw new UserNotFoundException("Product ID: " + id);
-        }
-        if (!selected.isInStock()) {
-            throw new OutOfStockException(selected.getName());
-        }
-
-        System.out.print("Enter quantity: ");
-        int qty = Integer.parseInt(scanner.nextLine());
-
-        if (qty <= 0) {
-            throw new InvalidQuantityException(qty);
-        }
-
-        
-        if (qty > selected.getStockQuantity()) {
-            System.out.println("❌ Not enough stock!");
-            System.out.println("   Requested : " + qty);
-            System.out.println("   Available : " + selected.getStockQuantity());
-            return;
-        }
-
-        customer.addToCart(new CartItem(selected, qty));
-        saveCartToFile(customer);
-
-    } catch (UserNotFoundException | OutOfStockException | InvalidQuantityException e) {
-        System.out.println(e.getMessage());
-    } catch (NumberFormatException e) {
-        System.out.println("❌ Please enter a valid number!");
-    }
-}
-
-    
-    static void placeOrder(Customer customer) {
-    try {
-        if (customer.getCart().isEmpty()) {
-            throw new InvalidQuantityException(0);
-        }
-
-        
-        for (CartItem item : customer.getCart()) {
-            if (item.getQuantity() > item.getProduct().getStockQuantity()) {
-                throw new OutOfStockException(
-                    item.getProduct().getName() +
-                    " (Requested: " + item.getQuantity() +
-                    " | Available: " + item.getProduct().getStockQuantity() + ")"
-                );
-            }
-        }
-
-        String date = java.time.LocalDate.now().toString();
-        Order order = new Order(orderIdCounter++, customer,
-                                customer.getCart(), date);
-
-        orders.add(order);
-        customer.addOrder(order);
-        order.displayInfo();
-        saveOrderToFile(order);
-
-        
-        for (CartItem item : order.getItems()) {
-            item.getProduct().reduceStock(item.getQuantity());
-        }
-
-        ReceiptWriter writer = new ReceiptWriter();
-        writer.writeTextReceipt(order);
-        writer.writeBinaryReceipt(order);
-        writer.serializeOrder(order);
-
-        customer.getCart().clear();
-        saveCartToFile(customer);
-        System.out.println("✅ Order placed successfully!");
-
-    } catch (OutOfStockException e) {
-        System.out.println("❌ " + e.getMessage());
-        System.out.println("❌ Order cancelled! Please update your cart.");
-    } catch (InvalidQuantityException e) {
-        System.out.println("❌ Your cart is empty! Add items first.");
-    }
-}
-
-    
-    static void adminMenu() {
-    System.out.print("\nEnter admin password: ");
-    String password = scanner.nextLine();
-
-    if (!password.equals("admin123")) {
-        System.out.println("❌ Wrong password! Access denied.");
-        return;
-    }
-
-    Admin admin = new Admin(1, "Admin", "admin@ezy.com", "admin123", "ADM01");
-    System.out.println("✅ Welcome, " + admin.getName() + "!");
-    admin.displayInfo();
-
-    boolean loggedIn = true;
-    while (loggedIn) {
-        System.out.println("\n--- Admin Menu ---");
-        System.out.println("1. View All Products");
-        System.out.println("2. View All Orders");
-        System.out.println("3. Update Order Status");
-        System.out.println("4. Delete Order");
-        System.out.println("5. Statistics");
-        System.out.println("0. Logout");
-        System.out.print("Enter choice: ");
-
+        System.out.print("\nEnter product ID to add to cart (0 to go back): ");
         try {
-            int choice = Integer.parseInt(scanner.nextLine());
-            switch (choice) {
-                case 1 -> DBConnection.showAllProducts();
-                case 2 -> {
-                    ReceiptWriter rw = new ReceiptWriter();
-                    rw.readAllOrders();
+            int id = Integer.parseInt(scanner.nextLine());
+            if (id == 0) return;
+
+            Product selected = null;
+            for (Product p : products) {
+                if (p.getProductId() == id) {
+                    selected = p;
+                    break;
                 }
-                case 3 -> {
-                    ReceiptWriter rw = new ReceiptWriter();
-                    System.out.print("Enter Order ID to update: ");
-                    int id = Integer.parseInt(scanner.nextLine());
-                    System.out.print("Enter new status (Pending/Shipped/Delivered): ");
-                    String status = scanner.nextLine();
-                    rw.updateOrderStatus(id, status);
-                }
-                case 4 -> {
-                    ReceiptWriter rw = new ReceiptWriter();
-                    System.out.print("Enter Order ID to delete: ");
-                    int id = Integer.parseInt(scanner.nextLine());
-                    rw.deleteOrder(id);
-                }
-                case 5 -> {
-                    ReceiptWriter rw = new ReceiptWriter();
-                    rw.showStatistics();
-                }
-                case 0 -> {
-                    System.out.println("👋 Logged out!");
-                    loggedIn = false;
-                }
-                default -> System.out.println("❌ Invalid choice!");
             }
+
+            if (selected == null) {
+                throw new UserNotFoundException("Product ID: " + id);
+            }
+            if (!selected.isInStock()) {
+                throw new OutOfStockException(selected.getName());
+            }
+
+            System.out.print("Enter quantity: ");
+            int qty = Integer.parseInt(scanner.nextLine());
+
+            if (qty <= 0) {
+                throw new InvalidQuantityException(qty);
+            }
+
+            if (qty > selected.getStockQuantity()) {
+                System.out.println("❌ Not enough stock!");
+                System.out.println("   Requested : " + qty);
+                System.out.println("   Available : " + selected.getStockQuantity());
+                return;
+            }
+
+            customer.addToCart(new CartItem(selected, qty));
+            saveCartToFile(customer);
+
+        } catch (UserNotFoundException | OutOfStockException | InvalidQuantityException e) {
+            System.out.println(e.getMessage());
         } catch (NumberFormatException e) {
             System.out.println("❌ Please enter a valid number!");
         }
     }
-}
+
+    static void placeOrder(Customer customer) {
+        try {
+            if (customer.getCart().isEmpty()) {
+                throw new InvalidQuantityException(0);
+            }
+
+            for (CartItem item : customer.getCart()) {
+                if (item.getQuantity() > item.getProduct().getStockQuantity()) {
+                    throw new OutOfStockException(
+                        item.getProduct().getName() +
+                        " (Requested: " + item.getQuantity() +
+                        " | Available: " + item.getProduct().getStockQuantity() + ")"
+                    );
+                }
+            }
+
+            String date = java.time.LocalDate.now().toString();
+            Order order = new Order(orderIdCounter++, customer,
+                                    customer.getCart(), date);
+
+            orders.add(order);
+            customer.addOrder(order);
+            order.displayInfo();
+            saveOrderToFile(order);
+
+            for (CartItem item : order.getItems()) {
+                item.getProduct().reduceStock(item.getQuantity());
+            }
+            saveProductsStock();
+
+            ReceiptWriter writer = new ReceiptWriter();
+            writer.writeTextReceipt(order);
+            writer.writeBinaryReceipt(order);
+            writer.serializeOrder(order);
+
+            customer.getCart().clear();
+            saveCartToFile(customer);
+            System.out.println("✅ Order placed successfully!");
+
+        } catch (OutOfStockException e) {
+            System.out.println("❌ " + e.getMessage());
+            System.out.println("❌ Order cancelled! Please update your cart.");
+        } catch (InvalidQuantityException e) {
+            System.out.println("❌ Your cart is empty! Add items first.");
+        }
+    }
+
+    static void adminMenu() {
+        System.out.print("\nEnter admin password: ");
+        String password = scanner.nextLine();
+
+        if (!password.equals("admin123")) {
+            System.out.println("❌ Wrong password! Access denied.");
+            return;
+        }
+
+        Admin admin = new Admin(1, "Admin", "admin@ezy.com", "admin123", "ADM01");
+        System.out.println("✅ Welcome, " + admin.getName() + "!");
+        admin.displayInfo();
+
+        boolean loggedIn = true;
+        while (loggedIn) {
+            System.out.println("\n--- Admin Menu ---");
+            System.out.println("1. View All Products");
+            System.out.println("2. View All Orders");
+            System.out.println("3. Update Order Status");
+            System.out.println("4. Delete Order");
+            System.out.println("5. Statistics");
+            System.out.println("0. Logout");
+            System.out.print("Enter choice: ");
+
+            try {
+                int choice = Integer.parseInt(scanner.nextLine());
+                switch (choice) {
+                    case 1 -> DBConnection.showAllProducts();
+                    case 2 -> {
+                        ReceiptWriter rw = new ReceiptWriter();
+                        rw.readAllOrders();
+                    }
+                    case 3 -> {
+                        ReceiptWriter rw = new ReceiptWriter();
+                        System.out.print("Enter Order ID to update: ");
+                        int id = Integer.parseInt(scanner.nextLine());
+                        System.out.print("Enter new status (Pending/Shipped/Delivered): ");
+                        String status = scanner.nextLine();
+                        rw.updateOrderStatus(id, status);
+                    }
+                    case 4 -> {
+                        ReceiptWriter rw = new ReceiptWriter();
+                        System.out.print("Enter Order ID to delete: ");
+                        int id = Integer.parseInt(scanner.nextLine());
+                        rw.deleteOrder(id);
+                    }
+                    case 5 -> {
+                        ReceiptWriter rw = new ReceiptWriter();
+                        rw.showStatistics();
+                    }
+                    case 0 -> {
+                        System.out.println("👋 Logged out!");
+                        loggedIn = false;
+                    }
+                    default -> System.out.println("❌ Invalid choice!");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("❌ Please enter a valid number!");
+            }
+        }
+    }
 }
