@@ -267,47 +267,55 @@ public class Main {
 
     
     static void browseProducts(Customer customer) {
-        System.out.println("\n--- Available Products ---");
-        for (Product p : products) {
-            System.out.println(p);
-        }
-
-        System.out.print("\nEnter product ID to add to cart (0 to go back): ");
-        try {
-            int id = Integer.parseInt(scanner.nextLine());
-            if (id == 0) return;
-
-            Product selected = null;
-            for (Product p : products) {
-                if (p.getProductId() == id) {
-                    selected = p;
-                    break;
-                }
-            }
-
-            if (selected == null) {
-                throw new UserNotFoundException("Product ID: " + id);
-            }
-            if (!selected.isInStock()) {
-                throw new OutOfStockException(selected.getName());
-            }
-
-            System.out.print("Enter quantity: ");
-            int qty = Integer.parseInt(scanner.nextLine());
-
-            if (qty <= 0) {
-                throw new InvalidQuantityException(qty);
-            }
-
-            customer.addToCart(new CartItem(selected, qty));
-            saveCartToFile(customer);    
-
-        } catch (UserNotFoundException | OutOfStockException | InvalidQuantityException e) {
-            System.out.println(e.getMessage());
-        } catch (NumberFormatException e) {
-            System.out.println("❌ Please enter a valid number!");
-        }
+    System.out.println("\n--- Available Products ---");
+    for (Product p : products) {
+        System.out.println(p);
     }
+
+    System.out.print("\nEnter product ID to add to cart (0 to go back): ");
+    try {
+        int id = Integer.parseInt(scanner.nextLine());
+        if (id == 0) return;
+
+        Product selected = null;
+        for (Product p : products) {
+            if (p.getProductId() == id) {
+                selected = p;
+                break;
+            }
+        }
+
+        if (selected == null) {
+            throw new UserNotFoundException("Product ID: " + id);
+        }
+        if (!selected.isInStock()) {
+            throw new OutOfStockException(selected.getName());
+        }
+
+        System.out.print("Enter quantity: ");
+        int qty = Integer.parseInt(scanner.nextLine());
+
+        if (qty <= 0) {
+            throw new InvalidQuantityException(qty);
+        }
+
+        
+        if (qty > selected.getStockQuantity()) {
+            System.out.println("❌ Not enough stock!");
+            System.out.println("   Requested : " + qty);
+            System.out.println("   Available : " + selected.getStockQuantity());
+            return;
+        }
+
+        customer.addToCart(new CartItem(selected, qty));
+        saveCartToFile(customer);
+
+    } catch (UserNotFoundException | OutOfStockException | InvalidQuantityException e) {
+        System.out.println(e.getMessage());
+    } catch (NumberFormatException e) {
+        System.out.println("❌ Please enter a valid number!");
+    }
+}
 
     
     static void placeOrder(Customer customer) {
